@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wedding Tracker</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: url('bg.png') no-repeat center center fixed; background-size: cover; min-height: 100vh; }
+    body::before { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.45); z-index: 0; }
+    .app { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; padding: 20px; }
+    h1 { text-align: center; color: #fff; margin-bottom: 20px; font-size: 2em; text-shadow: 2px 2px 4px rgba(0,0,0,0.2); }
+    h1 span { font-size: 0.5em; display: block; opacity: 0.8; }
+    .tabs { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; justify-content: center; }
+    .tab { padding: 10px 20px; border: none; border-radius: 25px; cursor: pointer; font-size: 14px; font-weight: 600; transition: all 0.3s; background: rgba(255,255,255,0.2); color: #fff; }
+    .tab:hover { background: rgba(255,255,255,0.4); }
+    .tab.active { background: #fff; color: #c0392b; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+    .panel { background: rgba(255,255,255,0.95); border-radius: 16px; padding: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); display: none; }
+    .panel.active { display: block; }
+    .form-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; align-items: flex-end; }
+    .form-group { display: flex; flex-direction: column; flex: 1; min-width: 140px; }
+    .form-group label { font-size: 12px; font-weight: 600; color: #555; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .form-group input, .form-group select { padding: 8px 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; transition: border-color 0.3s; }
+    .form-group input:focus, .form-group select:focus { outline: none; border-color: #c0392b; }
+    .btn { padding: 10px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.3s; }
+    .btn-add { background: linear-gradient(135deg, #c0392b, #e74c3c); color: #fff; }
+    .btn-add:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(192,57,43,0.4); }
+    .btn-del { background: #ff4757; color: #fff; padding: 5px 10px; font-size: 12px; border-radius: 6px; }
+    .btn-edit { background: #3498db; color: #fff; padding: 5px 10px; font-size: 12px; border-radius: 6px; margin-right: 4px; }
+    .btn-update { background: #27ae60; color: #fff; padding: 5px 12px; font-size: 12px; border-radius: 6px; margin-right: 4px; }
+    .btn-cancel { background: #95a5a6; color: #fff; padding: 5px 10px; font-size: 12px; border-radius: 6px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+    th { background: linear-gradient(135deg, #c0392b, #e74c3c); color: #fff; padding: 12px 8px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+    th:first-child { border-radius: 8px 0 0 0; } th:last-child { border-radius: 0 8px 0 0; }
+    td { padding: 10px 8px; border-bottom: 1px solid #f0f0f0; font-size: 13px; text-align: center; }
+    tr:hover td { background: #f8f7ff; }
+    tr.editing-row { background: #eafaf1; }
+    tr.editing-row td { border-bottom: 2px solid #27ae60; }
+    td input, td select { padding: 4px 6px; border: 1px solid #27ae60; border-radius: 4px; font-size: 12px; width: 100%; min-width: 60px; }
+    .total-row { background: #f0edff; font-weight: 700; } .total-row td { border-bottom: none; color: #c0392b; }
+    .status-pending { color: #f39c12; font-weight: 600; } .status-done { color: #27ae60; font-weight: 600; } .status-cancelled { color: #e74c3c; font-weight: 600; }
+    .priority-high { color: #e74c3c; font-weight: 600; } .priority-medium { color: #f39c12; font-weight: 600; } .priority-low { color: #27ae60; font-weight: 600; }
+    .empty-msg { text-align: center; padding: 40px; color: #aaa; font-size: 16px; }
+    .summary-cards { display: flex; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+    .summary-card { flex: 1; min-width: 150px; background: linear-gradient(135deg, #c0392b, #e74c3c); color: #fff; padding: 16px; border-radius: 12px; text-align: center; }
+    .summary-card .amount { font-size: 1.5em; font-weight: 700; } .summary-card .label { font-size: 12px; opacity: 0.8; margin-top: 4px; }
+    .table-wrap { overflow-x: auto; }
+    @media (max-width: 768px) { .form-group { min-width: 100%; } .tabs { gap: 4px; } .tab { padding: 8px 14px; font-size: 12px; } }
+  </style>
+</head>
+<body>
+<div class="app">
+  <h1>💍 Wedding Tracker <span>Plan Every Detail</span></h1>
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('events')">📋 Event List</button>
+    <button class="tab" onclick="switchTab('india')"><img src="https://flagcdn.com/20x15/in.png" alt="India" style="vertical-align:middle;margin-right:4px">India List</button>
+    <button class="tab" onclick="switchTab('us')"><img src="https://flagcdn.com/20x15/us.png" alt="US" style="vertical-align:middle;margin-right:4px">US List</button>
+    <button class="tab" onclick="switchTab('transactions')">💳 Transactions</button>
+    <button class="tab" onclick="switchTab('others')">📝 Others</button>
+  </div>
+
+  <!-- EVENT LIST -->
+  <div id="panel-events" class="panel active">
+    <div class="form-row">
+      <div class="form-group"><label>Event Name</label><input id="ev-name" placeholder="e.g. Sangeet"></div>
+      <div class="form-group"><label>Bride / Groom</label><select id="ev-side"><option value="Bride">Bride</option><option value="Groom">Groom</option><option value="Both">Both</option></select></div>
+      <div class="form-group"><label>Day</label><select id="ev-day"><option value="Day 1 - Thursday">Day 1 - Thursday</option><option value="Day 2 - Friday">Day 2 - Friday</option><option value="Day 3 - Saturday">Day 3 - Saturday</option><option value="Day 4 - Sunday">Day 4 - Sunday</option></select></div>
+      <div class="form-group"><label>Decor Type</label><input id="ev-decor" placeholder="e.g. Floral"></div>
+      <div class="form-group"><label>Status</label><select id="ev-status"><option value="Pending">Pending</option><option value="Done">Done</option><option value="Cancelled">Cancelled</option></select></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Notes</label><input id="ev-notes" placeholder="Any additional notes"></div>
+      <div><button class="btn btn-add" onclick="addItem('events')">+ Add Event</button></div>
+    </div>
+    <div class="table-wrap"><table><thead><tr><th>#</th><th>Event</th><th>Side</th><th>Day</th><th>Decor</th><th>Status</th><th>Notes</th><th>Action</th></tr></thead><tbody id="ev-body"></tbody></table></div>
+  </div>
+
+  <!-- INDIA EXPENSES -->
+  <div id="panel-india" class="panel">
+    <div class="summary-cards" id="india-summary"></div>
+    <div class="form-row">
+      <div class="form-group"><label>Item</label><input id="in-item" placeholder="e.g. Venue"></div>
+      <div class="form-group"><label>Estimated Cost (₹)</label><input id="in-est" type="number" placeholder="0"></div>
+      <div class="form-group"><label>Actual Cost (₹)</label><input id="in-act" type="number" placeholder="0"></div>
+      <div class="form-group"><label>Priority</label><select id="in-pri"><option value="High">High</option><option value="Medium">Medium</option><option value="Low">Low</option></select></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Description</label><input id="in-desc" placeholder="Details..."></div>
+      <div><button class="btn btn-add" onclick="addItem('india')">+ Add Expense</button></div>
+    </div>
+    <div class="table-wrap"><table><thead><tr><th>#</th><th>Item</th><th>Estimated (₹)</th><th>Actual (₹)</th><th>Priority</th><th>Description</th><th>Action</th></tr></thead><tbody id="in-body"></tbody></table></div>
+  </div>
+
+  <!-- US EXPENSES -->
+  <div id="panel-us" class="panel">
+    <div class="summary-cards" id="us-summary"></div>
+    <div class="form-row">
+      <div class="form-group"><label>Item</label><input id="us-item" placeholder="e.g. Flights"></div>
+      <div class="form-group"><label>Estimated Cost ($)</label><input id="us-est" type="number" placeholder="0"></div>
+      <div class="form-group"><label>Actual Cost ($)</label><input id="us-act" type="number" placeholder="0"></div>
+      <div class="form-group"><label>Priority</label><select id="us-pri"><option value="High">High</option><option value="Medium">Medium</option><option value="Low">Low</option></select></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Description</label><input id="us-desc" placeholder="Details..."></div>
+      <div><button class="btn btn-add" onclick="addItem('us')">+ Add Expense</button></div>
+    </div>
+    <div class="table-wrap"><table><thead><tr><th>#</th><th>Item</th><th>Estimated ($)</th><th>Actual ($)</th><th>Priority</th><th>Description</th><th>Action</th></tr></thead><tbody id="us-body"></tbody></table></div>
+  </div>
+
+  <!-- TRANSACTIONS -->
+  <div id="panel-transactions" class="panel">
+    <div class="summary-cards" id="txn-summary"></div>
+    <div class="form-row">
+      <div class="form-group"><label>Date</label><input id="tx-date" type="date"></div>
+      <div class="form-group"><label>Expense For</label><input id="tx-for" placeholder="e.g. Catering deposit"></div>
+      <div class="form-group"><label>Cost in US ($)</label><input id="tx-usd" type="number" placeholder="0"></div>
+      <div class="form-group"><label>Cost in India (₹)</label><input id="tx-inr" type="number" placeholder="0"></div>
+      <div><button class="btn btn-add" onclick="addItem('transactions')">+ Add Transaction</button></div>
+    </div>
+    <div class="table-wrap"><table><thead><tr><th>#</th><th>Date</th><th>Expense For</th><th>Cost US ($)</th><th>Cost India (₹)</th><th>Action</th></tr></thead><tbody id="tx-body"></tbody></table></div>
+  </div>
+
+  <!-- OTHERS -->
+  <div id="panel-others" class="panel">
+    <div class="form-row">
+      <div class="form-group"><label>Title</label><input id="ot-title" placeholder="e.g. Guest list reminder"></div>
+      <div class="form-group"><label>Category</label><select id="ot-cat"><option value="Reminder">Reminder</option><option value="Todo">Todo</option><option value="Note">Note</option><option value="Misc">Misc</option></select></div>
+      <div class="form-group"><label>Details</label><input id="ot-details" placeholder="Describe..."></div>
+      <div><button class="btn btn-add" onclick="addItem('others')">+ Add Item</button></div>
+    </div>
+    <div class="table-wrap"><table><thead><tr><th>#</th><th>Title</th><th>Category</th><th>Details</th><th>Added On</th><th>Action</th></tr></thead><tbody id="ot-body"></tbody></table></div>
+  </div>
+</div>
+
+<script>
+let data = { events: [], india: [], us: [], transactions: [], others: [] };
+let editingId = null; // _id of item currently being inline-edited
+
+async function api(method, url, body) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(url, opts);
+  data = await res.json();
+  render();
+}
+async function loadData() { const res = await fetch('/api/data'); data = await res.json(); render(); }
+function fmt(n) { return Number(n || 0).toLocaleString('en-IN'); }
+
+function switchTab(tab) {
+  editingId = null;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.textContent.toLowerCase().includes(tab.slice(0,4))));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + tab).classList.add('active');
+  render();
+}
+
+// --- ADD NEW ITEM ---
+async function addItem(type) {
+  let entry;
+  if (type === 'events') {
+    const name = document.getElementById('ev-name').value.trim();
+    if (!name) return alert('Please enter event name');
+    entry = { name, side: document.getElementById('ev-side').value, day: document.getElementById('ev-day').value, decor: document.getElementById('ev-decor').value.trim(), status: document.getElementById('ev-status').value, notes: document.getElementById('ev-notes').value.trim() };
+    ['ev-name','ev-day','ev-decor','ev-notes'].forEach(id => document.getElementById(id).value = '');
+  } else if (type === 'india' || type === 'us') {
+    const p = type === 'india' ? 'in' : 'us';
+    const item = document.getElementById(p+'-item').value.trim();
+    if (!item) return alert('Please enter item name');
+    entry = { item, est: +document.getElementById(p+'-est').value||0, act: +document.getElementById(p+'-act').value||0, priority: document.getElementById(p+'-pri').value, desc: document.getElementById(p+'-desc').value.trim() };
+    ['-item','-est','-act','-desc'].forEach(s => document.getElementById(p+s).value = '');
+  } else if (type === 'transactions') {
+    const expFor = document.getElementById('tx-for').value.trim();
+    if (!expFor) return alert('Please enter expense details');
+    entry = { date: document.getElementById('tx-date').value, expFor, usd: +document.getElementById('tx-usd').value||0, inr: +document.getElementById('tx-inr').value||0 };
+    ['tx-for','tx-usd','tx-inr'].forEach(id => document.getElementById(id).value = '');
+  } else if (type === 'others') {
+    const title = document.getElementById('ot-title').value.trim();
+    if (!title) return alert('Please enter a title');
+    entry = { title, cat: document.getElementById('ot-cat').value, details: document.getElementById('ot-details').value.trim(), date: new Date().toLocaleDateString() };
+    ['ot-title','ot-details'].forEach(id => document.getElementById(id).value = '');
+  }
+  await api('POST', '/api/' + type, entry);
+}
+
+// --- INLINE EDIT: turn row into inputs ---
+function startEdit(type, idx) {
+  editingId = data[type][idx]._id;
+  render(); // re-render will show inputs for this row
+}
+
+// --- INLINE UPDATE: read values from row inputs and PUT ---
+async function saveInlineEdit(type, id) {
+  let entry;
+  if (type === 'events') {
+    entry = { name: document.getElementById('edit-name').value, side: document.getElementById('edit-side').value, day: document.getElementById('edit-day').value, decor: document.getElementById('edit-decor').value, status: document.getElementById('edit-status').value, notes: document.getElementById('edit-notes').value };
+  } else if (type === 'india' || type === 'us') {
+    entry = { item: document.getElementById('edit-item').value, est: +document.getElementById('edit-est').value||0, act: +document.getElementById('edit-act').value||0, priority: document.getElementById('edit-priority').value, desc: document.getElementById('edit-desc').value };
+  } else if (type === 'transactions') {
+    entry = { date: document.getElementById('edit-date').value, expFor: document.getElementById('edit-expFor').value, usd: +document.getElementById('edit-usd').value||0, inr: +document.getElementById('edit-inr').value||0 };
+  } else if (type === 'others') {
+    const orig = data[type].find(o => o._id === id);
+    entry = { title: document.getElementById('edit-title').value, cat: document.getElementById('edit-cat').value, details: document.getElementById('edit-details').value, date: orig ? orig.date : new Date().toLocaleDateString() };
+  }
+  editingId = null;
+  await api('PUT', `/api/${type}/${id}`, entry);
+}
+
+function cancelInlineEdit() { editingId = null; render(); }
+
+async function del(type, idx) {
+  const item = data[type][idx];
+  if (editingId === item._id) editingId = null;
+  await api('DELETE', `/api/${type}/${item._id}`);
+}
+
+// --- Helper to make select HTML ---
+function sel(id, val, options) {
+  return `<select id="${id}">${options.map(o => `<option value="${o}"${o===val?' selected':''}>${o}</option>`).join('')}</select>`;
+}
+function inp(id, val, type) { return `<input id="${id}" type="${type||'text'}" value="${val||''}">`; }
+
+// --- RENDER ---
+function render() {
+  renderEvents();
+  renderExpense('india', 'in', '₹');
+  renderExpense('us', 'us', '$');
+  renderTransactions();
+  renderOthers();
+}
+
+function renderEvents() {
+  const body = document.getElementById('ev-body');
+  if (!data.events.length) { body.innerHTML = '<tr><td colspan="8" class="empty-msg">No events added yet</td></tr>'; return; }
+  body.innerHTML = data.events.map((e, i) => {
+    if (e._id === editingId) {
+      return `<tr class="editing-row"><td>${i+1}</td>
+        <td>${inp('edit-name',e.name)}</td>
+        <td>${sel('edit-side',e.side,['Bride','Groom','Both'])}</td>
+        <td>${sel('edit-day',e.day,['Day 1 - Thursday','Day 2 - Friday','Day 3 - Saturday','Day 4 - Sunday'])}</td>
+        <td>${inp('edit-decor',e.decor)}</td>
+        <td>${sel('edit-status',e.status,['Pending','Done','Cancelled'])}</td>
+        <td>${inp('edit-notes',e.notes)}</td>
+        <td><button class="btn btn-update" onclick="saveInlineEdit('events',${e._id})">✓ Update</button><button class="btn btn-cancel" onclick="cancelInlineEdit()">✕ Cancel</button></td></tr>`;
+    }
+    return `<tr><td>${i+1}</td><td>${e.name}</td><td>${e.side}</td><td>${e.day||'-'}</td><td>${e.decor||'-'}</td>
+      <td class="status-${(e.status||'').toLowerCase()}">${e.status}</td><td>${e.notes||'-'}</td>
+      <td><button class="btn btn-edit" onclick="startEdit('events',${i})">✎ Edit</button><button class="btn btn-del" onclick="del('events',${i})">✕</button></td></tr>`;
+  }).join('');
+}
+
+function renderExpense(type, prefix, symbol) {
+  const items = data[type];
+  const tEst = items.reduce((s,e)=>s+e.est,0), tAct = items.reduce((s,e)=>s+e.act,0);
+  document.getElementById(type+'-summary').innerHTML = `
+    <div class="summary-card"><div class="amount">${symbol}${fmt(tEst)}</div><div class="label">Total Estimated</div></div>
+    <div class="summary-card"><div class="amount">${symbol}${fmt(tAct)}</div><div class="label">Total Actual</div></div>
+    <div class="summary-card"><div class="amount">${items.length}</div><div class="label">Items</div></div>`;
+  const body = document.getElementById(prefix+'-body');
+  if (!items.length) { body.innerHTML = `<tr><td colspan="7" class="empty-msg">No ${type} expenses yet</td></tr>`; return; }
+  body.innerHTML = items.map((e,i) => {
+    if (e._id === editingId) {
+      return `<tr class="editing-row"><td>${i+1}</td>
+        <td>${inp('edit-item',e.item)}</td>
+        <td>${inp('edit-est',e.est,'number')}</td>
+        <td>${inp('edit-act',e.act,'number')}</td>
+        <td>${sel('edit-priority',e.priority,['High','Medium','Low'])}</td>
+        <td>${inp('edit-desc',e.desc)}</td>
+        <td><button class="btn btn-update" onclick="saveInlineEdit('${type}',${e._id})">✓ Update</button><button class="btn btn-cancel" onclick="cancelInlineEdit()">✕ Cancel</button></td></tr>`;
+    }
+    return `<tr><td>${i+1}</td><td>${e.item}</td><td>${symbol}${fmt(e.est)}</td><td>${symbol}${fmt(e.act)}</td>
+      <td class="priority-${(e.priority||'').toLowerCase()}">${e.priority}</td><td>${e.desc||'-'}</td>
+      <td><button class="btn btn-edit" onclick="startEdit('${type}',${i})">✎ Edit</button><button class="btn btn-del" onclick="del('${type}',${i})">✕</button></td></tr>`;
+  }).join('') + `<tr class="total-row"><td colspan="2">TOTAL</td><td>${symbol}${fmt(tEst)}</td><td>${symbol}${fmt(tAct)}</td><td colspan="3"></td></tr>`;
+}
+
+function renderTransactions() {
+  const txBody = document.getElementById('tx-body');
+  const txUSD = data.transactions.reduce((s,t)=>s+t.usd,0), txINR = data.transactions.reduce((s,t)=>s+t.inr,0);
+  document.getElementById('txn-summary').innerHTML = `
+    <div class="summary-card"><div class="amount">$${fmt(txUSD)}</div><div class="label">Total US Spend</div></div>
+    <div class="summary-card"><div class="amount">₹${fmt(txINR)}</div><div class="label">Total India Spend</div></div>
+    <div class="summary-card"><div class="amount">${data.transactions.length}</div><div class="label">Transactions</div></div>`;
+  if (!data.transactions.length) { txBody.innerHTML = '<tr><td colspan="6" class="empty-msg">No transactions yet</td></tr>'; return; }
+  txBody.innerHTML = data.transactions.map((t,i) => {
+    if (t._id === editingId) {
+      return `<tr class="editing-row"><td>${i+1}</td>
+        <td>${inp('edit-date',t.date,'date')}</td>
+        <td>${inp('edit-expFor',t.expFor)}</td>
+        <td>${inp('edit-usd',t.usd,'number')}</td>
+        <td>${inp('edit-inr',t.inr,'number')}</td>
+        <td><button class="btn btn-update" onclick="saveInlineEdit('transactions',${t._id})">✓ Update</button><button class="btn btn-cancel" onclick="cancelInlineEdit()">✕ Cancel</button></td></tr>`;
+    }
+    return `<tr><td>${i+1}</td><td>${t.date||'-'}</td><td>${t.expFor}</td><td>$${fmt(t.usd)}</td><td>₹${fmt(t.inr)}</td>
+      <td><button class="btn btn-edit" onclick="startEdit('transactions',${i})">✎ Edit</button><button class="btn btn-del" onclick="del('transactions',${i})">✕</button></td></tr>`;
+  }).join('') + `<tr class="total-row"><td colspan="3">TOTAL</td><td>$${fmt(txUSD)}</td><td>₹${fmt(txINR)}</td><td></td></tr>`;
+}
+
+function renderOthers() {
+  const body = document.getElementById('ot-body');
+  if (!data.others.length) { body.innerHTML = '<tr><td colspan="6" class="empty-msg">No items added yet</td></tr>'; return; }
+  body.innerHTML = data.others.map((o,i) => {
+    if (o._id === editingId) {
+      return `<tr class="editing-row"><td>${i+1}</td>
+        <td>${inp('edit-title',o.title)}</td>
+        <td>${sel('edit-cat',o.cat,['Reminder','Todo','Note','Misc'])}</td>
+        <td>${inp('edit-details',o.details)}</td>
+        <td>${o.date}</td>
+        <td><button class="btn btn-update" onclick="saveInlineEdit('others',${o._id})">✓ Update</button><button class="btn btn-cancel" onclick="cancelInlineEdit()">✕ Cancel</button></td></tr>`;
+    }
+    return `<tr><td>${i+1}</td><td>${o.title}</td><td>${o.cat}</td><td>${o.details||'-'}</td><td>${o.date}</td>
+      <td><button class="btn btn-edit" onclick="startEdit('others',${i})">✎ Edit</button><button class="btn btn-del" onclick="del('others',${i})">✕</button></td></tr>`;
+  }).join('');
+}
+
+document.querySelectorAll('input[type="date"]').forEach(el => el.valueAsDate = new Date());
+loadData();
+</script>
+</body>
+</html>
