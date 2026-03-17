@@ -38,7 +38,7 @@
     tr.editing-row td { border-bottom: 2px solid #27ae60; }
     td input, td select { padding: 4px 6px; border: 1px solid #27ae60; border-radius: 4px; font-size: 12px; width: 100%; min-width: 60px; }
     .total-row { background: #f0edff; font-weight: 700; } .total-row td { border-bottom: none; color: #c0392b; }
-    .status-pending { color: #f39c12; font-weight: 600; } .status-done { color: #27ae60; font-weight: 600; } .status-cancelled { color: #e74c3c; font-weight: 600; }
+    .status-pending { color: #f39c12; font-weight: 600; } .status-done { color: #27ae60; font-weight: 600; } .status-cancelled { color: #e74c3c; font-weight: 600; } .status-in-progress { color: #3498db; font-weight: 600; }
     .priority-high { color: #e74c3c; font-weight: 600; } .priority-medium { color: #f39c12; font-weight: 600; } .priority-low { color: #27ae60; font-weight: 600; }
     .empty-msg { text-align: center; padding: 40px; color: #aaa; font-size: 16px; }
     .summary-cards { display: flex; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
@@ -80,6 +80,8 @@
     <div class="summary-cards" id="india-summary"></div>
     <div class="form-row">
       <div class="form-group"><label>Item</label><input id="in-item" placeholder="e.g. Venue"></div>
+      <div class="form-group"><label>Count</label><input id="in-count" type="number" placeholder="1"></div>
+      <div class="form-group"><label>Status</label><select id="in-status"><option value="In Progress">In Progress</option><option value="Done">Done</option></select></div>
       <div class="form-group"><label>Estimated Cost (₹)</label><input id="in-est" type="number" placeholder="0"></div>
       <div class="form-group"><label>Actual Cost (₹)</label><input id="in-act" type="number" placeholder="0"></div>
       <div class="form-group"><label>Priority</label><select id="in-pri"><option value="High">High</option><option value="Medium">Medium</option><option value="Low">Low</option></select></div>
@@ -88,7 +90,7 @@
       <div class="form-group"><label>Description</label><input id="in-desc" placeholder="Details..."></div>
       <div><button class="btn btn-add" onclick="addItem('india')">+ Add Expense</button></div>
     </div>
-    <div class="table-wrap"><table><thead><tr><th>#</th><th>Item</th><th>Estimated (₹)</th><th>Actual (₹)</th><th>Priority</th><th>Description</th><th>Action</th></tr></thead><tbody id="in-body"></tbody></table></div>
+    <div class="table-wrap"><table><thead><tr><th>#</th><th>Item</th><th>Count</th><th>Status</th><th>Estimated (₹)</th><th>Actual (₹)</th><th>Priority</th><th>Description</th><th>Action</th></tr></thead><tbody id="in-body"></tbody></table></div>
   </div>
 
   <!-- US EXPENSES -->
@@ -96,6 +98,8 @@
     <div class="summary-cards" id="us-summary"></div>
     <div class="form-row">
       <div class="form-group"><label>Item</label><input id="us-item" placeholder="e.g. Flights"></div>
+      <div class="form-group"><label>Count</label><input id="us-count" type="number" placeholder="1"></div>
+      <div class="form-group"><label>Status</label><select id="us-status"><option value="In Progress">In Progress</option><option value="Done">Done</option></select></div>
       <div class="form-group"><label>Estimated Cost ($)</label><input id="us-est" type="number" placeholder="0"></div>
       <div class="form-group"><label>Actual Cost ($)</label><input id="us-act" type="number" placeholder="0"></div>
       <div class="form-group"><label>Priority</label><select id="us-pri"><option value="High">High</option><option value="Medium">Medium</option><option value="Low">Low</option></select></div>
@@ -104,7 +108,7 @@
       <div class="form-group"><label>Description</label><input id="us-desc" placeholder="Details..."></div>
       <div><button class="btn btn-add" onclick="addItem('us')">+ Add Expense</button></div>
     </div>
-    <div class="table-wrap"><table><thead><tr><th>#</th><th>Item</th><th>Estimated ($)</th><th>Actual ($)</th><th>Priority</th><th>Description</th><th>Action</th></tr></thead><tbody id="us-body"></tbody></table></div>
+    <div class="table-wrap"><table><thead><tr><th>#</th><th>Item</th><th>Count</th><th>Status</th><th>Estimated ($)</th><th>Actual ($)</th><th>Priority</th><th>Description</th><th>Action</th></tr></thead><tbody id="us-body"></tbody></table></div>
   </div>
 
   <!-- TRANSACTIONS -->
@@ -166,8 +170,8 @@ async function addItem(type) {
     const p = type === 'india' ? 'in' : 'us';
     const item = document.getElementById(p+'-item').value.trim();
     if (!item) return alert('Please enter item name');
-    entry = { item, est: +document.getElementById(p+'-est').value||0, act: +document.getElementById(p+'-act').value||0, priority: document.getElementById(p+'-pri').value, desc: document.getElementById(p+'-desc').value.trim() };
-    ['-item','-est','-act','-desc'].forEach(s => document.getElementById(p+s).value = '');
+    entry = { item, count: +document.getElementById(p+'-count').value||1, status: document.getElementById(p+'-status').value, est: +document.getElementById(p+'-est').value||0, act: +document.getElementById(p+'-act').value||0, priority: document.getElementById(p+'-pri').value, desc: document.getElementById(p+'-desc').value.trim() };
+    ['-item','-count','-est','-act','-desc'].forEach(s => document.getElementById(p+s).value = '');
   } else if (type === 'transactions') {
     const expFor = document.getElementById('tx-for').value.trim();
     if (!expFor) return alert('Please enter expense details');
@@ -194,7 +198,7 @@ async function saveInlineEdit(type, id) {
   if (type === 'events') {
     entry = { name: document.getElementById('edit-name').value, side: document.getElementById('edit-side').value, day: document.getElementById('edit-day').value, decor: document.getElementById('edit-decor').value, status: document.getElementById('edit-status').value, notes: document.getElementById('edit-notes').value };
   } else if (type === 'india' || type === 'us') {
-    entry = { item: document.getElementById('edit-item').value, est: +document.getElementById('edit-est').value||0, act: +document.getElementById('edit-act').value||0, priority: document.getElementById('edit-priority').value, desc: document.getElementById('edit-desc').value };
+    entry = { item: document.getElementById('edit-'+type+'-item').value, count: +document.getElementById('edit-'+type+'-count').value||1, status: document.getElementById('edit-'+type+'-status').value, est: +document.getElementById('edit-'+type+'-est').value||0, act: +document.getElementById('edit-'+type+'-act').value||0, priority: document.getElementById('edit-'+type+'-priority').value, desc: document.getElementById('edit-'+type+'-desc').value };
   } else if (type === 'transactions') {
     entry = { date: document.getElementById('edit-date').value, expFor: document.getElementById('edit-expFor').value, usd: +document.getElementById('edit-usd').value||0, inr: +document.getElementById('edit-inr').value||0 };
   } else if (type === 'others') {
@@ -256,21 +260,25 @@ function renderExpense(type, prefix, symbol) {
     <div class="summary-card"><div class="amount">${symbol}${fmt(tAct)}</div><div class="label">Total Actual</div></div>
     <div class="summary-card"><div class="amount">${items.length}</div><div class="label">Items</div></div>`;
   const body = document.getElementById(prefix+'-body');
-  if (!items.length) { body.innerHTML = `<tr><td colspan="7" class="empty-msg">No ${type} expenses yet</td></tr>`; return; }
+  if (!items.length) { body.innerHTML = `<tr><td colspan="9" class="empty-msg">No ${type} expenses yet</td></tr>`; return; }
   body.innerHTML = items.map((e,i) => {
     if (e._id === editingId) {
       return `<tr class="editing-row"><td>${i+1}</td>
-        <td>${inp('edit-item',e.item)}</td>
-        <td>${inp('edit-est',e.est,'number')}</td>
-        <td>${inp('edit-act',e.act,'number')}</td>
-        <td>${sel('edit-priority',e.priority,['High','Medium','Low'])}</td>
-        <td>${inp('edit-desc',e.desc)}</td>
+        <td>${inp('edit-'+type+'-item',e.item)}</td>
+        <td>${inp('edit-'+type+'-count',e.count||1,'number')}</td>
+        <td>${sel('edit-'+type+'-status',e.status||'In Progress',['In Progress','Done'])}</td>
+        <td>${inp('edit-'+type+'-est',e.est,'number')}</td>
+        <td>${inp('edit-'+type+'-act',e.act,'number')}</td>
+        <td>${sel('edit-'+type+'-priority',e.priority,['High','Medium','Low'])}</td>
+        <td>${inp('edit-'+type+'-desc',e.desc)}</td>
         <td><button class="btn btn-update" onclick="saveInlineEdit('${type}',${e._id})">✓ Update</button><button class="btn btn-cancel" onclick="cancelInlineEdit()">✕ Cancel</button></td></tr>`;
     }
-    return `<tr><td>${i+1}</td><td>${e.item}</td><td>${symbol}${fmt(e.est)}</td><td>${symbol}${fmt(e.act)}</td>
+    return `<tr><td>${i+1}</td><td>${e.item}</td><td>${e.count||1}</td>
+      <td class="status-${(e.status||'in progress').toLowerCase().replace(' ','-')}">${e.status||'In Progress'}</td>
+      <td>${symbol}${fmt(e.est)}</td><td>${symbol}${fmt(e.act)}</td>
       <td class="priority-${(e.priority||'').toLowerCase()}">${e.priority}</td><td>${e.desc||'-'}</td>
       <td><button class="btn btn-edit" onclick="startEdit('${type}',${i})">✎ Edit</button><button class="btn btn-del" onclick="del('${type}',${i})">✕</button></td></tr>`;
-  }).join('') + `<tr class="total-row"><td colspan="2">TOTAL</td><td>${symbol}${fmt(tEst)}</td><td>${symbol}${fmt(tAct)}</td><td colspan="3"></td></tr>`;
+  }).join('') + `<tr class="total-row"><td colspan="4">TOTAL</td><td>${symbol}${fmt(tEst)}</td><td>${symbol}${fmt(tAct)}</td><td colspan="3"></td></tr>`;
 }
 
 function renderTransactions() {

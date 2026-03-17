@@ -1,0 +1,64 @@
+{
+  "events": [
+    {
+      "name": "Haldi",
+      "side": "Both",
+      "day": "Day 1 - Thursday",
+      "decor": "Floral",
+      "status": "Pending",
+      "notes": "Yellow Flowers decoration"
+    }
+  ],
+  "india": [
+    {
+      "item": "Pelli Pancha set",
+      "count": 1,
+      "status": "Done",
+      "est": 20000,
+      "act": 32000,
+      "priority": "High",
+      "desc": "Pallaki pancha"
+    },
+    {
+      "item": "Gifting Sarees",
+      "count": 25,
+      "status": "Done",
+      "est": 100000,
+      "act": 160000,
+      "priority": "High",
+      "desc": ""
+    }
+  ],
+  "us": [
+    {
+      "item": "Pelli Pancha set",
+      "count": 1,
+      "status": "Done",
+      "est": 20000,
+      "act": 32000,
+      "priority": "High",
+      "desc": "Pallaki pancha"
+    }
+  ],
+  "transactions": [
+    {
+      "date": "2026-03-16",
+      "expFor": "Wedding venue",
+      "usd": 10000,
+      "inr": 0
+    },
+    {
+      "date": "2026-03-16",
+      "expFor": "Flights",
+      "usd": 2500,
+      "inr": 0
+    },
+    {
+      "date": "2026-03-16",
+      "expFor": "sarees",
+      "usd": 0,
+      "inr": 220000
+    }
+  ],
+  "others": []
+}
